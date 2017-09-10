@@ -18,6 +18,7 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
+import game
 
 class SearchProblem:
     """
@@ -72,6 +73,26 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
+
+def oppositeDirection(dir):
+    # from game import Directions
+    s = game.Directions.SOUTH
+    w = game.Directions.WEST
+    n = game.Directions.NORTH
+    e = game.Directions.EAST
+
+    if(dir == s):
+        return n
+    elif(dir == w):
+        return e
+    elif(dir == n):
+        return s
+    elif(dir == e):
+        return w
+    else:
+        raise Exception('Invalid direction!')
+
+
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -87,7 +108,53 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # print "Start:", problem.getStartState()
+    # print "Is the start a goal?", problem.isGoalState(problem.getStartState())
+    # print "Start's successors:", problem.getSuccessors(problem.getStartState())
+
+    path = []
+    exploredSet = set()
+    startState = problem.getStartState()
+    exploredSet.add(startState)
+
+
+    if(problem.isGoalState(startState)):
+        return path
+    successors = problem.getSuccessors(startState)
+    if(len(successors) == 0):
+        return path
+
+    fringeList = util.Stack()
+    for successor in successors:
+        fringeList.push(successor)
+
+    while(not fringeList.isEmpty()):
+        currentState = fringeList.pop()
+        print "currentState = "
+        print currentState
+        print "fringeList = "
+        for fringe in fringeList.list:
+            print fringe
+        print "path = "
+        print path
+        if(problem.isGoalState(currentState)): #goal reached
+            break
+        exploredSet.add(currentState[0]) #add popped element to explored set
+        path.append(currentState[1])
+        successors = problem.getSuccessors(currentState[0])
+        if(len(successors) == 0):
+            path.append(oppositeDirection(currentState[1]))
+        for successor in successors:
+            print "successor[0] in exploredSet = "
+            print (successor[0] in exploredSet)
+            if(not (successor[0] in exploredSet)):
+                print successor
+                fringeList.push(successor)
+
+
+    # return [s, s, w, s, w, w, s, w]
+    return path
+    # util.raiseNotDefined()
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
