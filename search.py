@@ -110,6 +110,8 @@ def depthFirstSearch(problem):
     "*** YOUR CODE HERE ***"
     # print "Start:", problem.getStartState()
     # print "Is the start a goal?", problem.isGoalState(problem.getStartState())
+    # print "Is the start a goal?", problem.isGoalState((1,1))
+    # return []
     # print "Start's successors:", problem.getSuccessors(problem.getStartState())
 
     path = []
@@ -130,26 +132,43 @@ def depthFirstSearch(problem):
 
     while(not fringeList.isEmpty()):
         currentState = fringeList.pop()
-        print "currentState = "
+        print "\ncurrentState = "
         print currentState
         print "fringeList = "
         for fringe in fringeList.list:
             print fringe
-        print "path = "
-        print path
-        if(problem.isGoalState(currentState)): #goal reached
-            break
+        print "explored set="
+        print exploredSet
+        # print "path = "
+        # print path
+        if(problem.isGoalState(currentState[0])): #goal reached
+            path.append(currentState[1])
+            print "goal reached"
+            return path
+        # if (not (currentState[0] in exploredSet)):
+        if(currentState[0] not in exploredSet):
+            path.append(currentState[1])
         exploredSet.add(currentState[0]) #add popped element to explored set
-        path.append(currentState[1])
+        successorsAdded = 0
+        fringeList.push(currentState)
         successors = problem.getSuccessors(currentState[0])
-        if(len(successors) == 0):
+        if(len(successors) == 0):   #backtrack
+            backtrack = fringeList.pop()
             path.append(oppositeDirection(currentState[1]))
+            fringeList.push(backtrack)
         for successor in successors:
             print "successor[0] in exploredSet = "
             print (successor[0] in exploredSet)
             if(not (successor[0] in exploredSet)):
                 print successor
+                successorsAdded += 1
                 fringeList.push(successor)
+        if(not successorsAdded):
+            backtrack = fringeList.pop()
+            path.append(oppositeDirection(currentState[1]))
+            # fringeList.push(backtrack)
+        print "path created = "
+        print path
 
 
     # return [s, s, w, s, w, w, s, w]
