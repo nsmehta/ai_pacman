@@ -94,6 +94,38 @@ def oppositeDirection(direction):
         raise Exception('Invalid direction!')
 
 
+def dfsPath(problem, fringeList, exploredSet):
+    if fringeList.isEmpty():
+        return None
+
+    currentState = fringeList.pop()
+    currentPath = currentState[3][:]
+    currentPath.append(currentState[1])
+    exploredSet.add(currentState[0])
+
+    # print 'current state ='
+    # print currentState
+    # print 'current path = %s' % currentPath
+    # print 'explored set = %s' % exploredSet
+
+    if problem.isGoalState(currentState[0]):
+        # print 'goal state reached'
+        return currentPath
+
+    counter = 0
+    for successor in problem.getSuccessors(currentState[0]):
+        if successor[0] not in exploredSet:
+            counter += 1
+            successor = list(successor)
+            successor.append(currentPath)
+            successor = tuple(successor)
+            print 'pushing this successor in queue'
+            print successor
+            fringeList.push(successor)
+
+    return dfsPath(problem, fringeList, exploredSet)
+
+
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -108,79 +140,145 @@ def depthFirstSearch(problem):
     print "Is the start a goal?", problem.isGoalState(problem.getStartState())
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
-    "*** YOUR CODE HERE ***"
-    # print "Start:", problem.getStartState()
-    # print "Is the start a goal?", problem.isGoalState(problem.getStartState())
-    # print "Is the start a goal?", problem.isGoalState((1,1))
-    # return []
-    # print "Start's successors:", problem.getSuccessors(problem.getStartState())
+    if problem.isGoalState(problem.getStartState()):
+        return None
 
-    path = []
     exploredSet = set()
-    startState = problem.getStartState()
-    exploredSet.add(startState)
-
-
-    if problem.isGoalState(startState):
-        return path
-    successors = problem.getSuccessors(startState)
-    if len(successors) == 0:
-        return path
-
+    exploredSet.add(problem.getStartState())
     fringeList = util.Stack()
-    for successor in successors:
+    for successor in problem.getSuccessors(problem.getStartState()):
+        successor = list(successor)
+        successor.append(list())
+        successor = tuple(successor)
+        print 'pushing this successor in queue'
+        print successor
         fringeList.push(successor)
 
-    while not fringeList.isEmpty():
-        currentState = fringeList.pop()
-        # print "\ncurrentState = "
-        # print currentState
-        # print "fringeList = "
-        # for fringe in fringeList.list:
-            # print fringe
-        # print "explored set="
-        # print exploredSet
-        # print "path = "
-        # print path
-        if problem.isGoalState(currentState[0]): #goal reached
-            path.append(currentState[1])
-            # print "goal reached"
-            return path #can be replaced by break
-        if currentState[0] not in exploredSet:
-            path.append(currentState[1])
-        exploredSet.add(currentState[0]) #add popped element to explored set
-        successorsAdded = 0
-        fringeList.push(currentState)
-        successors = problem.getSuccessors(currentState[0])
-        if len(successors) == 0:   #backtrack
-            backtrack = fringeList.pop()
-            path.append(oppositeDirection(currentState[1]))
-            fringeList.push(backtrack)
-        for successor in successors:
-            # print "successor[0] in exploredSet = "
-            # print (successor[0] in exploredSet)
-            if not (successor[0] in exploredSet):
-                # print successor
-                successorsAdded += 1
-                fringeList.push(successor)
-        if not successorsAdded:
-            fringeList.pop()
-            path.append(oppositeDirection(currentState[1]))
-        # print "path created = "
-        # print path
+    path = dfsPath(problem, fringeList, exploredSet)
+    if len(path) > 0:
+        return path
+    else:
+        print 'Path not found'
+        util.raiseNotDefined()
 
-    return path
+
+def bfsPath(problem, fringeList, exploredSet):
+    if fringeList.isEmpty():
+        return None
+
+    currentState = fringeList.pop()
+    currentPath = currentState[3][:]
+    currentPath.append(currentState[1])
+    exploredSet.add(currentState[0])
+
+    # print 'current state ='
+    # print currentState
+    # print 'current path = %s' % currentPath
+    # print 'explored set = %s' % exploredSet
+
+    if problem.isGoalState(currentState[0]):
+        # print 'goal state reached'
+        return currentPath
+
+    counter = 0
+    for successor in problem.getSuccessors(currentState[0]):
+        if successor[0] not in exploredSet:
+            counter += 1
+            successor = list(successor)
+            successor.append(currentPath)
+            successor[2] += currentState[2]
+            successor = tuple(successor)
+            print 'pushing this successor in queue'
+            print successor
+            fringeList.push(successor)
+
+    return bfsPath(problem, fringeList, exploredSet)
 
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    if problem.isGoalState(problem.getStartState()):
+        return None
+
+    exploredSet = set()
+    exploredSet.add(problem.getStartState())
+    fringeList = util.Queue()
+    for successor in problem.getSuccessors(problem.getStartState()):
+        successor = list(successor)
+        successor.append(list())
+        successor = tuple(successor)
+        print 'pushing this successor in queue'
+        print successor
+        fringeList.push(successor)
+
+    path = bfsPath(problem, fringeList, exploredSet)
+    if len(path) > 0:
+        return path
+    else:
+        print 'Path not found'
+        util.raiseNotDefined()
+
+
+def ucsPath(problem, fringeList, exploredSet):
+    if fringeList.isEmpty():
+        # print 'queue is empty'
+        return None
+
+    currentState = fringeList.pop()
+    currentPath = currentState[3][:]
+    currentPath.append(currentState[1])
+    exploredSet.add(currentState[0])
+
+    # print 'current state ='
+    # print currentState
+    # print 'current path = %s' % currentPath
+    # print 'explored set = %s' % exploredSet
+
+    if problem.isGoalState(currentState[0]):
+        # print 'goal state reached'
+        return currentPath
+
+    counter = 0
+    for successor in problem.getSuccessors(currentState[0]):
+        if successor[0] not in exploredSet:
+            counter += 1
+            successor = list(successor)
+            successor.append(currentPath)
+            successor[2] += currentState[2]
+            successor = tuple(successor)
+            print 'pushing this successor in queue'
+            print successor
+            heuristicCost = successor[2]
+            print 'heuristic cost = %d' % successor[2]
+            print heuristicCost
+            fringeList.push(successor, successor[2])
+
+    return ucsPath(problem, fringeList, exploredSet)
+
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    if problem.isGoalState(problem.getStartState()):
+        return None
+
+    exploredSet = set()
+    exploredSet.add(problem.getStartState())
+    fringeList = util.PriorityQueue()
+    for successor in problem.getSuccessors(problem.getStartState()):
+        successor = list(successor)
+        successor.append(list())
+        successor = tuple(successor)
+        print 'pushing this successor in queue'
+        print successor
+        print 'cost = %d' % successor[2]
+        fringeList.push(successor, successor[2])
+
+    path = ucsPath(problem, fringeList, exploredSet)
+    if len(path) > 0:
+        return path
+    else:
+        print 'Path not found'
+        util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
     """
@@ -190,20 +288,20 @@ def nullHeuristic(state, problem=None):
     return 0
 
 
-def adjustPath(previousPath, currentPath):
-    index = 0
-    while index < len(previousPath) and index < len(currentPath) and previousPath[index] == currentPath[index]:
-        index += 1
-    path = previousPath[:]
-    for cursor in range(len(previousPath) - 1, index - 1, -1):
-        path.append(oppositeDirection(previousPath[cursor]))
-    for cursor in range(index, len(currentPath)):
-        path.append(currentPath[cursor])
+# def adjustPath(previousPath, currentPath):
+#     index = 0
+#     while index < len(previousPath) and index < len(currentPath) and previousPath[index] == currentPath[index]:
+#         index += 1
+#     path = previousPath[:]
+#     for cursor in range(len(previousPath) - 1, index - 1, -1):
+#         path.append(oppositeDirection(previousPath[cursor]))
+#     for cursor in range(index, len(currentPath)):
+#         path.append(currentPath[cursor])
+#
+#     return path
 
-    return path
 
-
-def getPath(problem, heuristic, fringeList, exploredSet):
+def astarPath(problem, heuristic, fringeList, exploredSet):
     if fringeList.isEmpty():
         # print 'queue is empty'
         return None
@@ -237,7 +335,7 @@ def getPath(problem, heuristic, fringeList, exploredSet):
             print heuristicCost
             fringeList.push(successor, successor[2] + heuristic(currentState[0], problem))
 
-    return getPath(problem, heuristic, fringeList, exploredSet)
+    return astarPath(problem, heuristic, fringeList, exploredSet)
 
 
 def aStarSearch(problem, heuristic=nullHeuristic):
@@ -259,7 +357,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
         print 'heuristic cost = %d + %d = %d' % (successor[2], heuristic(problem.getStartState(), problem), heuristicCost)
         fringeList.push(successor, successor[2] + heuristic(problem.getStartState(), problem))
 
-    path = getPath(problem, heuristic, fringeList, exploredSet)
+    path = astarPath(problem, heuristic, fringeList, exploredSet)
     if len(path) > 0:
         return path
     else:
