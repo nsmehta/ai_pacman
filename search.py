@@ -19,6 +19,7 @@ Pacman agents (in searchAgents.py).
 
 import util
 import game
+import sys
 
 class SearchProblem:
     """
@@ -74,20 +75,20 @@ def tinyMazeSearch(problem):
     return  [s, s, w, s, w, w, s, w]
 
 
-def oppositeDirection(dir):
+def oppositeDirection(direction):
     # from game import Directions
     s = game.Directions.SOUTH
     w = game.Directions.WEST
     n = game.Directions.NORTH
     e = game.Directions.EAST
 
-    if(dir == s):
+    if direction == s:
         return n
-    elif(dir == w):
+    elif direction == w:
         return e
-    elif(dir == n):
+    elif direction == n:
         return s
-    elif(dir == e):
+    elif direction == e:
         return w
     else:
         raise Exception('Invalid direction!')
@@ -120,60 +121,56 @@ def depthFirstSearch(problem):
     exploredSet.add(startState)
 
 
-    if(problem.isGoalState(startState)):
+    if problem.isGoalState(startState):
         return path
     successors = problem.getSuccessors(startState)
-    if(len(successors) == 0):
+    if len(successors) == 0:
         return path
 
     fringeList = util.Stack()
     for successor in successors:
         fringeList.push(successor)
 
-    while(not fringeList.isEmpty()):
+    while not fringeList.isEmpty():
         currentState = fringeList.pop()
-        print "\ncurrentState = "
-        print currentState
-        print "fringeList = "
-        for fringe in fringeList.list:
-            print fringe
-        print "explored set="
-        print exploredSet
+        # print "\ncurrentState = "
+        # print currentState
+        # print "fringeList = "
+        # for fringe in fringeList.list:
+            # print fringe
+        # print "explored set="
+        # print exploredSet
         # print "path = "
         # print path
-        if(problem.isGoalState(currentState[0])): #goal reached
+        if problem.isGoalState(currentState[0]): #goal reached
             path.append(currentState[1])
-            print "goal reached"
-            return path
-        # if (not (currentState[0] in exploredSet)):
-        if(currentState[0] not in exploredSet):
+            # print "goal reached"
+            return path #can be replaced by break
+        if currentState[0] not in exploredSet:
             path.append(currentState[1])
         exploredSet.add(currentState[0]) #add popped element to explored set
         successorsAdded = 0
         fringeList.push(currentState)
         successors = problem.getSuccessors(currentState[0])
-        if(len(successors) == 0):   #backtrack
+        if len(successors) == 0:   #backtrack
             backtrack = fringeList.pop()
             path.append(oppositeDirection(currentState[1]))
             fringeList.push(backtrack)
         for successor in successors:
-            print "successor[0] in exploredSet = "
-            print (successor[0] in exploredSet)
-            if(not (successor[0] in exploredSet)):
-                print successor
+            # print "successor[0] in exploredSet = "
+            # print (successor[0] in exploredSet)
+            if not (successor[0] in exploredSet):
+                # print successor
                 successorsAdded += 1
                 fringeList.push(successor)
-        if(not successorsAdded):
-            backtrack = fringeList.pop()
+        if not successorsAdded:
+            fringeList.pop()
             path.append(oppositeDirection(currentState[1]))
-            # fringeList.push(backtrack)
-        print "path created = "
-        print path
+        # print "path created = "
+        # print path
 
-
-    # return [s, s, w, s, w, w, s, w]
     return path
-    # util.raiseNotDefined()
+
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
@@ -192,10 +189,82 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
+
+def adjustPath(previousPath, currentPath):
+    index = 0
+    while index < len(previousPath) and index < len(currentPath) and previousPath[index] == currentPath[index]:
+        index += 1
+    path = previousPath[:]
+    for cursor in range(len(previousPath) - 1, index - 1, -1):
+        path.append(oppositeDirection(previousPath[cursor]))
+    for cursor in range(index, len(currentPath)):
+        path.append(currentPath[cursor])
+
+    return path
+
+
+def getPath(problem, heuristic, fringeList, exploredSet):
+    if fringeList.isEmpty():
+        # print 'queue is empty'
+        return None
+
+    currentState = fringeList.pop()
+    currentPath = currentState[3][:]
+    currentPath.append(currentState[1])
+    exploredSet.add(currentState[0])
+
+    # print 'current state ='
+    # print currentState
+    # print 'current path = %s' % currentPath
+    # print 'explored set = %s' % exploredSet
+
+    if problem.isGoalState(currentState[0]):
+        # print 'goal state reached'
+        return currentPath
+
+    counter = 0
+    for successor in problem.getSuccessors(currentState[0]):
+        if successor[0] not in exploredSet:
+            counter += 1
+            successor = list(successor)
+            successor.append(currentPath)
+            successor[2] += currentState[2]
+            successor = tuple(successor)
+            print 'pushing this successor in queue'
+            print successor
+            heuristicCost = successor[2] + heuristic(currentState[0], problem)
+            print 'heuristic cost = %d + %d = %d' % (successor[2], heuristic(currentState[0], problem), heuristicCost)
+            print heuristicCost
+            fringeList.push(successor, successor[2] + heuristic(currentState[0], problem))
+
+    return getPath(problem, heuristic, fringeList, exploredSet)
+
+
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    if problem.isGoalState(problem.getStartState()):
+        return None
+
+    exploredSet = set()
+    exploredSet.add(problem.getStartState())
+    fringeList = util.PriorityQueue()
+    for successor in problem.getSuccessors(problem.getStartState()):
+        successor = list(successor)
+        successor.append(list())
+        successor = tuple(successor)
+        print 'pushing this successor in queue'
+        print successor
+        heuristicCost = successor[2] + heuristic(problem.getStartState(), problem)
+        print 'heuristic cost = %d + %d = %d' % (successor[2], heuristic(problem.getStartState(), problem), heuristicCost)
+        fringeList.push(successor, successor[2] + heuristic(problem.getStartState(), problem))
+
+    path = getPath(problem, heuristic, fringeList, exploredSet)
+    if len(path) > 0:
+        return path
+    else:
+        print 'Path not found'
+        util.raiseNotDefined()
 
 
 # Abbreviations
