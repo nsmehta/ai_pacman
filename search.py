@@ -103,13 +103,7 @@ def dfsPath(problem, fringeList, exploredSet):
     currentPath.append(currentState[1])
     exploredSet.add(currentState[0])
 
-    # print 'current state ='
-    # print currentState
-    # print 'current path = %s' % currentPath
-    # print 'explored set = %s' % exploredSet
-
     if problem.isGoalState(currentState[0]):
-        # print 'goal state reached'
         return currentPath
 
     counter = 0
@@ -119,8 +113,6 @@ def dfsPath(problem, fringeList, exploredSet):
             successor = list(successor)
             successor.append(currentPath)
             successor = tuple(successor)
-            print 'pushing this successor in queue'
-            print successor
             fringeList.push(successor)
 
     return dfsPath(problem, fringeList, exploredSet)
@@ -150,8 +142,6 @@ def depthFirstSearch(problem):
         successor = list(successor)
         successor.append(list())
         successor = tuple(successor)
-        print 'pushing this successor in queue'
-        print successor
         fringeList.push(successor)
 
     path = dfsPath(problem, fringeList, exploredSet)
@@ -159,10 +149,9 @@ def depthFirstSearch(problem):
         return path
     else:
         print 'Path not found'
-        util.raiseNotDefined()
 
 
-def bfsPath(problem, fringeList, exploredSet):
+def bfsPath(problem, fringeList, exploredSet, fringeSet):
     if fringeList.isEmpty():
         return None
 
@@ -171,28 +160,20 @@ def bfsPath(problem, fringeList, exploredSet):
     currentPath.append(currentState[1])
     exploredSet.add(currentState[0])
 
-    # print 'current state ='
-    # print currentState
-    # print 'current path = %s' % currentPath
-    # print 'explored set = %s' % exploredSet
-
     if problem.isGoalState(currentState[0]):
         # print 'goal state reached'
         return currentPath
 
-    counter = 0
     for successor in problem.getSuccessors(currentState[0]):
-        if successor[0] not in exploredSet:
-            counter += 1
+        if successor[0] not in exploredSet and successor[0] not in fringeSet:
             successor = list(successor)
             successor.append(currentPath)
             successor[2] += currentState[2]
             successor = tuple(successor)
-            print 'pushing this successor in queue'
-            print successor
             fringeList.push(successor)
+            fringeSet.add(successor[0])
 
-    return bfsPath(problem, fringeList, exploredSet)
+    return bfsPath(problem, fringeList, exploredSet, fringeSet)
 
 
 def breadthFirstSearch(problem):
@@ -203,25 +184,37 @@ def breadthFirstSearch(problem):
     exploredSet = set()
     exploredSet.add(problem.getStartState())
     fringeList = util.Queue()
+    fringeSet = set()
+    fringeSet.add(problem.getStartState())
     for successor in problem.getSuccessors(problem.getStartState()):
-        successor = list(successor)
-        successor.append(list())
-        successor = tuple(successor)
-        print 'pushing this successor in queue'
-        print successor
-        fringeList.push(successor)
+        if successor[0] not in fringeSet:
+            successor = list(successor)
+            successor.append(list())
+            successor = tuple(successor)
+            fringeList.push(successor)
+            fringeSet.add(successor[0])
 
-    path = bfsPath(problem, fringeList, exploredSet)
-    if len(path) > 0:
+    path = bfsPath(problem, fringeList, exploredSet, fringeSet)
+    if path is not None and len(path) > 0:
         return path
     else:
         print 'Path not found'
         util.raiseNotDefined()
 
 
-def ucsPath(problem, fringeList, exploredSet):
+def getUCSFringeList(successor, fringeList):
+    queue = util.PriorityQueue()
+    while not fringeList.isEmpty():
+        nextElement = fringeList.pop()
+        if nextElement[0] == successor[0] and nextElement[2] > successor[2]:
+            queue.push(successor, successor[2])
+        else:
+            queue.push(nextElement, nextElement[2])
+    return queue
+
+
+def ucsPath(problem, fringeList, exploredSet, fringeSet):
     if fringeList.isEmpty():
-        # print 'queue is empty'
         return None
 
     currentState = fringeList.pop()
@@ -229,31 +222,24 @@ def ucsPath(problem, fringeList, exploredSet):
     currentPath.append(currentState[1])
     exploredSet.add(currentState[0])
 
-    # print 'current state ='
-    # print currentState
-    # print 'current path = %s' % currentPath
-    # print 'explored set = %s' % exploredSet
-
     if problem.isGoalState(currentState[0]):
-        # print 'goal state reached'
         return currentPath
 
-    counter = 0
     for successor in problem.getSuccessors(currentState[0]):
         if successor[0] not in exploredSet:
-            counter += 1
             successor = list(successor)
             successor.append(currentPath)
             successor[2] += currentState[2]
             successor = tuple(successor)
-            print 'pushing this successor in queue'
-            print successor
-            heuristicCost = successor[2]
-            print 'heuristic cost = %d' % successor[2]
-            print heuristicCost
-            fringeList.push(successor, successor[2])
+            if successor[0] not in fringeSet:
+                fringeList.push(successor, successor[2])
+                fringeSet.add(successor[0])
+            else:
+                fringeList = getUCSFringeList(successor, fringeList)
 
-    return ucsPath(problem, fringeList, exploredSet)
+
+    return ucsPath(problem, fringeList, exploredSet, fringeSet)
+
 
 
 def uniformCostSearch(problem):
@@ -264,21 +250,23 @@ def uniformCostSearch(problem):
     exploredSet = set()
     exploredSet.add(problem.getStartState())
     fringeList = util.PriorityQueue()
+    fringeSet = set()
+    fringeSet.add(problem.getStartState())
     for successor in problem.getSuccessors(problem.getStartState()):
         successor = list(successor)
         successor.append(list())
         successor = tuple(successor)
-        print 'pushing this successor in queue'
-        print successor
-        print 'cost = %d' % successor[2]
-        fringeList.push(successor, successor[2])
+        if successor[0] not in fringeSet:
+            fringeList.push(successor, successor[2])
+            fringeSet.add(successor[0])
+        else:
+            fringeList = getUCSFringeList(successor, fringeList)
 
-    path = ucsPath(problem, fringeList, exploredSet)
+    path = ucsPath(problem, fringeList, exploredSet, fringeSet)
     if len(path) > 0:
         return path
     else:
         print 'Path not found'
-        util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
     """
@@ -288,22 +276,19 @@ def nullHeuristic(state, problem=None):
     return 0
 
 
-# def adjustPath(previousPath, currentPath):
-#     index = 0
-#     while index < len(previousPath) and index < len(currentPath) and previousPath[index] == currentPath[index]:
-#         index += 1
-#     path = previousPath[:]
-#     for cursor in range(len(previousPath) - 1, index - 1, -1):
-#         path.append(oppositeDirection(previousPath[cursor]))
-#     for cursor in range(index, len(currentPath)):
-#         path.append(currentPath[cursor])
-#
-#     return path
+def getAStarFringeList(successor, fringeList):
+    queue = util.PriorityQueue()
+    while not fringeList.isEmpty():
+        nextElement = fringeList.pop()
+        if nextElement[0] == successor[0] and nextElement[2] > successor[2]:
+            queue.push(successor, successor[4])
+        else:
+            queue.push(nextElement, nextElement[4])
+    return queue
 
 
-def astarPath(problem, heuristic, fringeList, exploredSet):
+def astarPath(problem, heuristic, fringeList, exploredSet, fringeSet):
     if fringeList.isEmpty():
-        # print 'queue is empty'
         return None
 
     currentState = fringeList.pop()
@@ -311,31 +296,23 @@ def astarPath(problem, heuristic, fringeList, exploredSet):
     currentPath.append(currentState[1])
     exploredSet.add(currentState[0])
 
-    # print 'current state ='
-    # print currentState
-    # print 'current path = %s' % currentPath
-    # print 'explored set = %s' % exploredSet
-
     if problem.isGoalState(currentState[0]):
-        # print 'goal state reached'
         return currentPath
 
-    counter = 0
     for successor in problem.getSuccessors(currentState[0]):
         if successor[0] not in exploredSet:
-            counter += 1
             successor = list(successor)
             successor.append(currentPath)
             successor[2] += currentState[2]
+            successor.append(successor[2] + heuristic(successor[0], problem))
             successor = tuple(successor)
-            print 'pushing this successor in queue'
-            print successor
-            heuristicCost = successor[2] + heuristic(currentState[0], problem)
-            print 'heuristic cost = %d + %d = %d' % (successor[2], heuristic(currentState[0], problem), heuristicCost)
-            print heuristicCost
-            fringeList.push(successor, successor[2] + heuristic(currentState[0], problem))
+            if successor[0] not in fringeSet:
+                fringeList.push(successor, successor[4])
+                fringeSet.add(successor[0])
+            else:
+                fringeList = getAStarFringeList(successor, fringeList)
 
-    return astarPath(problem, heuristic, fringeList, exploredSet)
+    return astarPath(problem, heuristic, fringeList, exploredSet, fringeSet)
 
 
 def aStarSearch(problem, heuristic=nullHeuristic):
@@ -347,22 +324,24 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     exploredSet = set()
     exploredSet.add(problem.getStartState())
     fringeList = util.PriorityQueue()
+    fringeSet = set()
+    fringeSet.add(problem.getStartState())
     for successor in problem.getSuccessors(problem.getStartState()):
         successor = list(successor)
         successor.append(list())
+        successor.append(successor[2] + heuristic(successor[0], problem))
         successor = tuple(successor)
-        print 'pushing this successor in queue'
-        print successor
-        heuristicCost = successor[2] + heuristic(problem.getStartState(), problem)
-        print 'heuristic cost = %d + %d = %d' % (successor[2], heuristic(problem.getStartState(), problem), heuristicCost)
-        fringeList.push(successor, successor[2] + heuristic(problem.getStartState(), problem))
+        if successor[0] not in fringeSet:
+            fringeList.push(successor, successor[4])
+            fringeSet.add(successor[0])
+        else:
+            fringeList = getAStarFringeList(successor, fringeList)
 
-    path = astarPath(problem, heuristic, fringeList, exploredSet)
+    path = astarPath(problem, heuristic, fringeList, exploredSet, fringeSet)
     if len(path) > 0:
         return path
     else:
         print 'Path not found'
-        util.raiseNotDefined()
 
 
 # Abbreviations
