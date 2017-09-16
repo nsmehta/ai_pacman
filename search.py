@@ -156,12 +156,21 @@ def bfsPath(problem, fringeList, exploredSet, fringeSet):
         return None
 
     currentState = fringeList.pop()
-    currentPath = currentState[3][:]
+    currentPath = currentState[-1][:]
     currentPath.append(currentState[1])
     exploredSet.add(currentState[0])
 
     if problem.isGoalState(currentState[0]):
-        # print 'goal state reached'
+        # if currentState[0] != problem.getStartState():
+        #     return currentPath
+        # # print 'goal state reached'
+        # else:
+        #     tempPath = breadthFirstSearch(problem)
+        #     print tempPath
+        #     # currentPath.append(tempPath)
+        #     currentPath = currentPath + tempPath
+        #     print "currentPath = ", currentPath
+        #     return currentPath
         return currentPath
 
     for successor in problem.getSuccessors(currentState[0]):
@@ -178,9 +187,11 @@ def bfsPath(problem, fringeList, exploredSet, fringeSet):
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
+
     if problem.isGoalState(problem.getStartState()):
         return None
 
+    originalStartState = problem.getStartState()
     exploredSet = set()
     exploredSet.add(problem.getStartState())
     fringeList = util.Queue()
@@ -195,11 +206,44 @@ def breadthFirstSearch(problem):
             fringeSet.add(successor[0])
 
     path = bfsPath(problem, fringeList, exploredSet, fringeSet)
+
+    while(originalStartState != problem.getStartState()):
+        if problem.isGoalState(problem.getStartState()):
+            return None
+
+        # originalStartState = problem.getStartState()
+        exploredSet = set()
+        exploredSet.add(problem.getStartState())
+        fringeList = util.Queue()
+        fringeSet = set()
+        fringeSet.add(problem.getStartState())
+        for successor in problem.getSuccessors(problem.getStartState()):
+            if successor[0] not in fringeSet:
+                successor = list(successor)
+                successor.append(list())
+                successor = tuple(successor)
+                fringeList.push(successor)
+                fringeSet.add(successor[0])
+
+        path += bfsPath(problem, fringeList, exploredSet, fringeSet)
+
     if path is not None and len(path) > 0:
+        print 'path = %s' % path
+        print len(path)
         return path
     else:
         print 'Path not found'
-        util.raiseNotDefined()
+
+            # if currentState[0] != problem.getStartState():
+            #     return currentPath
+            # # print 'goal state reached'
+            # else:
+            #     tempPath = breadthFirstSearch(problem)
+            #     print tempPath
+            #     # currentPath.append(tempPath)
+            #     currentPath = currentPath + tempPath
+            #     print "currentPath = ", currentPath
+            #     return currentPath
 
 
 def getUCSFringeList(successor, fringeList):
