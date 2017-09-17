@@ -287,7 +287,8 @@ class CornersProblem(search.SearchProblem):
         self.corners.append((1, top))
         self.corners.append((right, top))
         self.corners.append((right, 1))
-        self.currentCorner = self.corners[0]
+        self.currentGoal = self.corners[0]
+        self.goal = self.corners[3]
         for corner in self.corners:
             if not startingGameState.hasFood(*corner):
                 print 'Warning: no food in corner ' + str(corner)
@@ -308,14 +309,14 @@ class CornersProblem(search.SearchProblem):
         """
         # print 'state = '
         # print state
-        if state[0] == self.currentCorner:
+        if state[0] == self.currentGoal:
             self.cornersReached += 1
             if self.cornersReached < 4:
                 self.startingPosition = state
-                self.corners.remove(self.currentCorner)
+                self.corners.remove(self.currentGoal)
                 print self.corners
                 print len(self.corners)
-                self.currentCorner = self.corners[0]
+                self.currentGoal = self.corners[0]
                 print self._expanded
             else:
                 self.startingPosition = self.originalStartingPosition
@@ -401,7 +402,9 @@ class CornersProblem(search.SearchProblem):
         Returns the cost of a particular sequence of actions.  If those actions
         include an illegal move, return 999999.  This is implemented for you.
         """
-        if actions == None: return 999999
+        if actions is None: return 999999
+        if isinstance(self.startingPosition[0], tuple):
+            self.startingPosition = self.startingPosition[0]
         x,y= self.startingPosition
         for action in actions:
             dx, dy = Actions.directionToVector(action)
@@ -426,14 +429,26 @@ def cornersHeuristic(state, problem):
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+
+    if(isinstance(state[0], tuple)):
+        startingPosition = state[0]
+    else:
+        startingPosition = state
+    if startingPosition in corners:
+        return 0
+    # print startingPosition
+    manhattanDistance = manhattanHeuristic(startingPosition, problem)
+    cornerDistance = 0
+    for index in range(1, len(corners) - 1):
+        cornerDistance += manhattanHeuristic(corners[index], problem)
+    return manhattanDistance + cornerDistance # Default to trivial solution
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):
         self.searchFunction = lambda prob: search.aStarSearch(prob, cornersHeuristic)
         self.searchType = CornersProblem
+        # print 'astar init called'
 
 class FoodSearchProblem:
     """
