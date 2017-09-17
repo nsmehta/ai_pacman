@@ -361,8 +361,67 @@ def astarPath(problem, heuristic, fringeList, exploredSet, fringeSet):
     return astarPath(problem, heuristic, fringeList, exploredSet, fringeSet)
 
 
+def aStarNonRecursive(problem, heuristic=nullHeuristic):
+    """non-recursive implementation of A star"""
+    if(problem.isGoalState(problem.getStartState())):
+        return None
+
+    originalStartState = problem.getStartState()
+    exploredSet = set()
+    exploredSet.add(problem.getStartState())
+    fringeList = util.PriorityQueue()
+    fringeSet = set()
+    fringeSet.add(problem.getStartState())
+
+    for successor in problem.getSuccessors(problem.getStartState()):
+        successor = list(successor)
+        successor.append(list())
+        successor.append(successor[2] + heuristic(successor[0], problem))
+        successor = tuple(successor)
+        if successor[0] not in fringeSet:
+            fringeList.push(successor, successor[4])
+            fringeSet.add(successor[0])
+        else:
+            fringeList = getAStarFringeList(successor, fringeList)
+
+
+    while(not fringeList.isEmpty()):
+        currentState = fringeList.pop()
+        currentPath = currentState[3][:]
+        currentPath.append(currentState[1])
+        exploredSet.add(currentState[0])
+
+        if problem.isGoalState(currentState[0]):
+            return currentPath
+
+        for successor in problem.getSuccessors(currentState[0]):
+            if successor[0] not in exploredSet:
+                successor = list(successor)
+                successor.append(currentPath)
+                successor[2] += currentState[2]
+                successor.append(successor[2] + heuristic(successor[0], problem))
+                successor = tuple(successor)
+                if successor[0] not in fringeSet:
+                    fringeList.push(successor, successor[4])
+                    fringeSet.add(successor[0])
+                else:
+                    fringeList = getAStarFringeList(successor, fringeList)
+
+
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
+
+    originalStartState = problem.getStartState()
+    path = aStarNonRecursive(problem, heuristic)
+    while (originalStartState != problem.getStartState()):
+        print "in while"
+        path += aStarNonRecursive(problem, heuristic)
+    if len(path) > 0:
+        return path
+    else:
+        print 'Path not found'
+        return ""
+
 
     if problem.isGoalState(problem.getStartState()):
         return None
